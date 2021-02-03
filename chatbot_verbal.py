@@ -141,7 +141,7 @@ flag=True
 fst="My name is Jarvis. I will answer your queries about Science. If you want to exit, say Bye"
 tts = gTTS(fst)
 tts.save(file)
-#os.system("mpg123 " + file )
+#os.system("mpg123 " + file ) # linux
 playsound(file)
 os.remove(file)
 r = sr.Recognizer()
