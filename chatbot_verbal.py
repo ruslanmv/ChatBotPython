@@ -1,9 +1,9 @@
 #sudo apt-get install portaudio19-dev python-all-dev python3-all-dev
 #sudo apt-get install portaudio19-dev
-#pip install SpeechRecognition numpy gTTs sklearn 
+#pip install SpeechRecognition numpy gTTs sklearn
 #pip install gTTS
 #sudo apt-get install mpg123
- 
+
 import io
 import random
 import string
@@ -15,21 +15,24 @@ import warnings
 from gtts import gTTS
 import os
 warnings.filterwarnings('ignore')
-import speech_recognition as sr 
+import speech_recognition as sr
 import nltk
 from nltk.stem import WordNetLemmatizer
 
+import pyaudio
+import speech_recognition as sr
+from playsound import playsound
 
 # for downloading package files can be commented after First run
 nltk.download('popular', quiet=True)
 nltk.download('nps_chat',quiet=True)
-nltk.download('punkt') 
+nltk.download('punkt')
 nltk.download('wordnet')
 
 
 posts = nltk.corpus.nps_chat.xml_posts()[:10000]
 
-# To Recognise input type as QUES. 
+# To Recognise input type as QUES.
 def dialogue_act_features(post):
     features = {}
     for word in nltk.word_tokenize(post):
@@ -41,7 +44,7 @@ size = int(len(featuresets) * 0.1)
 train_set, test_set = featuresets[size:], featuresets[:size]
 classifier = nltk.NaiveBayesClassifier.train(train_set)
 
-# Recognised input types 
+# Recognised input types
 #Greet
 #"Bye"/>
 #"Clarify"/>
@@ -60,23 +63,23 @@ classifier = nltk.NaiveBayesClassifier.train(train_set)
 
 
 #colour palet
-def prRed(skk): print("\033[91m {}\033[00m" .format(skk)) 
-def prGreen(skk): print("\033[92m {}\033[00m" .format(skk)) 
-def prYellow(skk): print("\033[93m {}\033[00m" .format(skk)) 
-def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk)) 
-def prPurple(skk): print("\033[95m {}\033[00m" .format(skk)) 
-def prCyan(skk): print("\033[96m {}\033[00m" .format(skk)) 
-def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk)) 
+def prRed(skk): print("\033[91m {}\033[00m" .format(skk))
+def prGreen(skk): print("\033[92m {}\033[00m" .format(skk))
+def prYellow(skk): print("\033[93m {}\033[00m" .format(skk))
+def prLightPurple(skk): print("\033[94m {}\033[00m" .format(skk))
+def prPurple(skk): print("\033[95m {}\033[00m" .format(skk))
+def prCyan(skk): print("\033[96m {}\033[00m" .format(skk))
+def prLightGray(skk): print("\033[97m {}\033[00m" .format(skk))
 def prBlack(skk): print("\033[98m {}\033[00m" .format(skk))
 
 
- 
+
 #Reading in the input_corpus
 with open('intro_join','r', encoding='utf8', errors ='ignore') as fin:
     raw = fin.read().lower()
 
 #TOkenisation
-sent_tokens = nltk.sent_tokenize(raw)# converts to list of sentences 
+sent_tokens = nltk.sent_tokenize(raw)# converts to list of sentences
 word_tokens = nltk.word_tokenize(raw)# converts to list of words
 
 # Preprocessing
@@ -99,7 +102,20 @@ def greeting(sentence):
             return random.choice(GREETING_RESPONSES)
 
 
-# Generating response and processing 
+#play text
+from gtts import gTTS
+import os
+def speak(inputstring):
+    inputs=inputstring
+    tosay = gTTS(inputs)
+    file = 'sentence2.mp3'
+    tosay.save(file)
+    playsound(file)
+    os.remove(file)
+    return
+
+
+# Generating response and processing
 def response(user_response):
     robo_response=''
     sent_tokens.append(user_response)
@@ -118,27 +134,33 @@ def response(user_response):
         return robo_response
 
 
-#Recording voice input using microphone 
+#Recording voice input using microphone
 file = "file.mp3"
+
 flag=True
 fst="My name is Jarvis. I will answer your queries about Science. If you want to exit, say Bye"
-tts = gTTS(fst, 'en')
+tts = gTTS(fst)
 tts.save(file)
-os.system("mpg123 " + file )
+#os.system("mpg123 " + file )
+playsound(file)
+os.remove(file)
 r = sr.Recognizer()
 prYellow(fst)
 
-# Taking voice input and processing 
+r=sr.Recognizer()
+r.energy_threshold=4000
+
+# Taking voice input and processing
 while(flag==True):
     with sr.Microphone() as source:
         audio= r.listen(source)
     try:
-        user_response = format(r.recognize(audio))
+        user_response = format(r.recognize_google(audio))
         print("\033[91m {}\033[00m" .format("YOU SAID : "+user_response))
     except sr.UnknownValueError:
         prYellow("Oops! Didn't catch that")
         pass
-    
+
     #user_response = input()
     #user_response=user_response.lower()
     clas=classifier.classify(dialogue_act_features(user_response))
@@ -154,9 +176,17 @@ while(flag==True):
                 res=(response(user_response))
                 prYellow(res)
                 sent_tokens.remove(user_response)
-                tts = gTTS(res, 'en')
+                tts = gTTS(res)
+
                 tts.save(file)
-                os.system("mpg123 " + file)
+                # os.system("mpg123 " + file)  #linux
+                playsound(file)
+                os.remove(file)
+
+
+
     else:
         flag=False
-        prYellow("Jarvis: Bye! take care..")
+        texExit="Jarvis: Bye! take care.."
+        prYellow(texExit)
+        speak(texExit)
